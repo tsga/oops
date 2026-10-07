@@ -347,9 +347,67 @@ void UnstructuredInterpolator::computeUnmaskedInterpMatrix(
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     std::array<int, 3> indices{};
     std::array<double, 3> baryCoords{};
-    const bool validTriangle = meshTri_.containingTriangleAndBarycentricCoords(
-        lats_out[jloc], lons_out[jloc], indices, baryCoords);
+    bool validTriangle;
+    
+    if (geom_.functionSpace().type() == "PointCloud") {  // || !geom_.hasMesh()) {
+      /*
+      // Convert (lat, lon) in degrees to 3D Cartesian coordinates
+      const double deg2rad = M_PI / 180.0;
+      const double clat = std::cos(lats_out[jloc] * deg2rad);
+      const double slat = std::sin(lats_out[jloc] * deg2rad);
+      const double clon = std::cos(lons_out[jloc] * deg2rad);
+      const double slon = std::sin(lons_out[jloc] * deg2rad);
+    
+      const double radius = atlas::util::Earth::radius();
+      const atlas::Point3 point3D(
+        radius * clat * clon,
+        radius * clat * slon,
+        radius * slat
+      );
+    
+      // Query geomData's ProximitySearch tree directly for the single nearest point
+      //const auto nearest = proximitySearch_.closestTaskAndNode(point3D);  //geom_.closestTaskAndNode(point3D); 
+      //const int nearestIndex = nearest.second; // Extract local node index 
+      const auto nearest = proximitySearch_.globalNodeTree().closestPoint(point3D);
+      const int nearestIndex = nearest.payload().second;
 
+      // Assign nearest neighbor index with full weight (1.0)
+      indices[0] = nearestIndex;
+      indices[1] = nearestIndex;
+      indices[2] = nearestIndex;
+    
+      baryCoords[0] = 1.0;
+      baryCoords[1] = 0.0;
+      baryCoords[2] = 0.0;
+    
+      validTriangle = true; // Mark as successfully found so the loop adds it to the interpolation stencil
+      */
+      const double searchRadius = 50000.0; // m
+
+      const auto matches = proximitySearch_.closestPointWithinRadius(lats_out[jloc], lons_out[jloc], searchRadius);
+    
+      if (matches.has_value()) {  // if(matches)
+        // Take the nearest match returned by the search
+        const int nearestIndex = matches.value(); // or: *matches;
+    
+        indices[0] = nearestIndex;
+        indices[1] = nearestIndex;
+        indices[2] = nearestIndex;
+    
+        baryCoords[0] = 1.0;
+        baryCoords[1] = 0.0;
+        baryCoords[2] = 0.0;
+    
+        validTriangle = true;
+      } else {
+        validTriangle = false; // Point lies outside active point cloud region
+      }
+
+    } else {
+      // Original 2D mesh triangulation call for NodeColumns / StructuredColumns
+      validTriangle = meshTri_.containingTriangleAndBarycentricCoords(
+          lats_out[jloc], lons_out[jloc], indices, baryCoords);
+    }
     // Edge case: target point outside of source grid, can occur for regional models
     if (!validTriangle) {
       if (enableRegionalNnFill) {

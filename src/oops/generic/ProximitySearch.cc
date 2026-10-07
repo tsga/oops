@@ -44,7 +44,7 @@ ProximitySearch::ProximitySearch(const atlas::FunctionSpace & fspace,
     Log::info() << "ProximitySearch received uninitialized FunctionSpace,"
       << " so skipping set up of the proximity cache." << std::endl;
     return;
-  } else if (fspace.type() == "PointCloud" || fspace.type() == "Spectral") {
+  } else if (fspace.type() == "Spectral") {  //|| fspace.type() == "PointCloud" don't skipe pointcloud
     Log::info() << "ProximitySearch received FunctionSpace " << fspace.type()
       << ", so skipping set up of the proximity cache." << std::endl;
     return;
