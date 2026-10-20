@@ -133,13 +133,6 @@ MeshTriangulation::MeshTriangulation(const atlas::FunctionSpace & fspace,
 bool MeshTriangulation::containingTriangleAndBarycentricCoords(
     const double lat, const double lon,
     std::array<int, 3> & indices, std::array<double, 3> & baryCoords) const {
-
-  // Early exit for PointCloud since no 2D cells or surface mesh exist
-  /*if (!fspace || fspace.type() == "PointCloud") {  // || fspace.type() == "Spectral") {
-    Log::info() << "MeshTriangulation: Skipping 2D triangulation for FunctionSpace type "
-                << (fspace ? fspace.type() : "null") << std::endl;
-    return true;
-  }*/
   ASSERT(mesh_);
   ASSERT(mesh_.nodes().has_field("xyz"));
   ASSERT(!localCellCenterTree_.empty());
