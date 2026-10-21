@@ -97,6 +97,12 @@ MeshTriangulation::MeshTriangulation(const atlas::FunctionSpace & fspace,
              "MeshTriangulation received FunctionSpace " + fspace.type()
              + " using a distribution where some MPI tasks own zero points.");
 
+  // PointCloud has no 2D cells or surface triangles
+  if (fspace.type() == "PointCloud") {  // || fspace.type() == "Spectral") {
+      Log::info() << "MeshTriangulation skipping 2D triangulation for "
+                  << fspace.type() << " FunctionSpace." << std::endl;
+      return;
+  }  
   // Initialize mesh and local cell-center tree
   setMeshAndTriangulation(fspace, comm);
   setLocalTree();
